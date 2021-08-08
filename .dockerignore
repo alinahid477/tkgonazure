@@ -1,0 +1,9 @@
+.bash_history
+.kube
+.local
+.docker
+.docker/config.json
+.vmware-cna-saas
+.azure
+.tanzu
+.ssh

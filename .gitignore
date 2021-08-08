@@ -1,0 +1,16 @@
+.env
+*.nogit*
+.bash_history
+*.crt
+.tanzu
+.local
+.azure
+.ssh
+
+.kube/*
+!.kube/.gitkeep
+.ssh/*
+!.ssh/.gitkeep
+binaries/*
+!binaries/.gitkeep
+!binaries/tkginstall.sh
