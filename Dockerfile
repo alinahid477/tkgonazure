@@ -21,7 +21,13 @@ RUN apt-get update && apt-get install -y \
 RUN curl -o /usr/local/bin/jq -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 && \
   	chmod +x /usr/local/bin/jq
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
-RUN curl -sSL https://get.docker.com/ | sh
+# RUN curl -sSL https://get.docker.com/ | sh
+
+ENV DOCKERVERSION=20.10.8
+RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz \
+  && tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 \
+                 -C /usr/local/bin docker/docker \
+  && rm docker-${DOCKERVERSION}.tgz
 
 # COPY .ssh/id_rsa /root/.ssh/
 # COPY .ssh/known_hosts /root/.ssh/

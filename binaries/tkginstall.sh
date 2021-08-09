@@ -10,16 +10,16 @@ then
     az vm image terms accept --publisher vmware-inc --offer tkg-capi --plan $TKG_PLAN --subscription $AZ_SUBSCRIPTION_ID
 
     printf "\n\n\n executing ssh-keygen for email $TKG_ADMIN_EMAIL...\n"
-    /dev/zero/ ssh-keygen -t rsa -b 4096 -C "$TKG_ADMIN_EMAIL"
+    ssh-keygen -t rsa -b 4096 -C "$TKG_ADMIN_EMAIL"
     ssh-add ~/.ssh/id_rsa
+
+    printf "\n\n\n Here's your public key:\n"
     cat ~/.ssh/id_rsa.pub
 
     printf "\n\n\n Launching management cluster create UI.\n"
-    printf "\nOpen localhost:$TKG_MANAGEMENT_UI_EXPOSE_PORT in your browser to complete the process using UI.\n"
+    
 
-    BINDIP=$(cat /etc/hosts | grep $HOSTNAME | awk '{print $1}'):$TKG_MANAGEMENT_UI_EXPOSE_PORT
-
-    tanzu management-cluster create --ui -y -v 8 --browser none --bind $BINDIP    
+    tanzu management-cluster create --ui -y -v 8 --browser none
 fi
 
 /bin/bash
