@@ -1,4 +1,5 @@
-# tkg on azure
+# Tanzu on azure
+
 
 ## Pre-Requisites
 
@@ -28,12 +29,16 @@ Below are the values required:
 - TKG_ADMIN_EMAIL={this email address will be needed for private and public key purpose. Nothing will be emailed to this address. Just signature purpose stuff.}
 
 
-### Docker
+## Docker
 
 ```
 docker build . -t tkgonazure
 docker run -it --rm --net=host -v ${PWD}:/root/ -v /var/run/docker.sock:/var/run/docker.sock --name tkgonazure tkgonazure /bin/bash
 ```
+
+***When run the first time (.env is not marked as COMPLETE eg: does not have COMPLETE=yes) it automatically goes initiates  management cluster creation.***
+
+***When run 2nd or more times (.env is marked as COMPLETE eg: .env file contains COMPLETE=yes) it given shell access where you can execute tanzu commands***
 
 **When prompted for keygen do the below:**
 - when promted for filename press 'enter'. to keep the file name as id_rsa
@@ -44,10 +49,24 @@ Yes, I am using --net=host --->
 - since this is only a bootstrapped container scalability is not of concern 
 - since I will only run this to provision tkgm on azure and only on my localmachine or a jump vm security is not of concern 
 
-
-# That's it
+# That's it for creating Tanzu Management Cluster on Azure
 
 Simple enough with this bootstrapped docker.
+
+
+# Create workload clusters on Azure using Tanzu
+
+Read details in the official documentation here: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-tanzu-k8s-clusters-deploy.html
+
+***Using this boostrapped docker when you get shell access you can use it to create workload clusters using tanzu cli on azure*** 
+
+Here's a summarised version of creating workoad cluster using this bootstrapped docker:
+- `cp .tanzu/tkg/clusterconfigs/n44jxxxx.yaml workload-clusters/my-worload-cluster1.yaml`
+
+    Where n44jxxxx is the randomly generated (via the wizard) name of the file based on which the management cluster was created.  
+- change the below values:
+    - CLUSTER_NAME: my-workload-cluster1 (or give any appropriate name)
+    - WORKER_MACHINE_COUNT: 3 (Change `CLUSTER_PLAN: prod` for 3 control place node and 3 worker node. Since the default number of worker node for `CLUSTER_PLAN: dev` is 1, I am overwriting it with this value. It is also posibble to overwrite control plane node count with `CONTROL_PLANE_MACHINE_COUNT`.)
 
 
 ## Handy Commands

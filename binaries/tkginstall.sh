@@ -20,6 +20,13 @@ then
     
 
     tanzu management-cluster create --ui -y -v 8 --browser none
+
+
+    printf "\n\n\n Done. Marking as commplete.\n"
+    printf "\nCOMPLETE=YES" >> /root/.env
+else
+    printf "\n\n\n Already marked as complete in the .env. If this is not desired then remove the 'COMPLETE=yes' from the .env file.\n"
+    printf "\nGoing straign to shell access.\n Type tanzu --help to get started\n"
 fi
 
 /bin/bash

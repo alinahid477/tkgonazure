@@ -15,3 +15,6 @@
 binaries/*
 !binaries/.gitkeep
 !binaries/tkginstall.sh
+!binaries/tkgworkload.sh
+workload-clusters/*
+!workload-clusters/.gitkeep
