@@ -39,16 +39,7 @@ RUN cd /tmp && mkdir tanzu \
 	&& cd /tmp/tanzu/cli \
 	&& install core/v1.3.1/tanzu-core-linux_amd64 /usr/local/bin/tanzu \
 	&& cd /tmp/tanzu \
-	&& tanzu plugin clean \
-	&& tanzu plugin install --local cli all \
-	&& tanzu plugin list \
-	&& tanzu plugin install management-cluster \
-	&& tanzu plugin install cluster \
-	&& tanzu plugin install login \
-	&& tanzu plugin install kubernetes-release \
-	&& tanzu plugin install alpha \
-	&& tanzu plugin install pinniped-auth
-
+	&& tanzu plugin clean
 
 
 COPY binaries/tkginstall.sh /usr/local/tkginstall.sh
