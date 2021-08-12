@@ -66,10 +66,36 @@ Here's a summarised version of creating workoad cluster using this bootstrapped 
     Where n44jxxxx is the randomly generated (via the wizard) name of the file based on which the management cluster was created.  
 - change the below values:
     - CLUSTER_NAME: my-workload-cluster1 (or give any appropriate name)
-    - WORKER_MACHINE_COUNT: 3 (Change `CLUSTER_PLAN: prod` for 3 control place node and 3 worker node. Since the default number of worker node for `CLUSTER_PLAN: dev` is 1, I am overwriting it with this value. It is also posibble to overwrite control plane node count with `CONTROL_PLANE_MACHINE_COUNT`.)
+    - WORKER_MACHINE_COUNT: 3 (This is optional. Change `CLUSTER_PLAN: prod` for 3 control place node and 3 worker node. Since the default number of worker node for `CLUSTER_PLAN: dev` is 1, I am overwriting it with this value. It is also posibble to overwrite control plane node count with `CONTROL_PLANE_MACHINE_COUNT`.)
+
+
+# Enable Identity Management After Management Cluster Deployment
+
+Doc: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-cluster-lifecycle-enable-identity-management.html
+
+sample config in ~/identity-management/oidc/azure-oidc.sample.yaml
+
+Steps:
+- Fill out the value in the sample config file (that one is for Azure, AWS/vSphere would be similar)
+- export _TKG_CLUSTER_FORCE_ROLE="management"
+- export FILTER_BY_ADDON_TYPE="authentication/pinniped"
+- tanzu cluster create CLUSTER-NAME --dry-run -f ~/identity-management/oidc/azure-oidc.sample.yaml > ~/identity-management/oidc/CLUSTER-NAME-example-secret.yaml
+- `kubectl apply -f ~/identity-management/oidc/CLUSTER-NAME-example-secret.yaml`
+- check by running `kubectl get app pinniped -n tkg-system`
+- if "reconcile failed" then do `kubectl get app pinniped -n tkg-system -o yaml`
+
+
 
 
 ## Handy Commands
+
+
+
+delete nsg
+```
+az network nsg delete -g tkgm -n tkg-az-cluster-1-node-nsg
+```
+
 
 When the management cluster config is already in place we can simple run the below command. (To generate the yaml always use the wizard.)
 ```

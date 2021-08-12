@@ -50,12 +50,15 @@ then
     printf "*****************************************\n"
     printf "\n\n\n"
 
-    printf "Creating NSG in azure"
+    sed -i '$ d' $configfile
+
+
+    printf "Creating NSG in azure\n\n"
     az network nsg create -g $AZURE_RESOURCE_GROUP -n $AZ_NSG_NAME --tags tkg $CLUSTER_NAME
     printf "\n\nDONE.\n\n\n"
 
-    printf "Creating k8s cluster"
-    tanzu cluster create --file $configfile
+    printf "Creating k8s cluster\n\n"
+    tanzu cluster create --file $configfile -v 6
     printf "\n\nDONE.\n\n\n"
 
 

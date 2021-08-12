@@ -1,0 +1,32 @@
+AZURE_CLIENT_ID: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_CLIENT_SECRET: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_CONTROL_PLANE_MACHINE_TYPE: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_CONTROL_PLANE_SUBNET_CIDR: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_CONTROL_PLANE_SUBNET_NAME: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_LOCATION: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_NODE_MACHINE_TYPE: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_NODE_SUBNET_CIDR: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_NODE_SUBNET_NAME: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_RESOURCE_GROUP: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_SSH_PUBLIC_KEY_B64: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_SUBSCRIPTION_ID: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_TENANT_ID: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_VNET_CIDR: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_VNET_NAME: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AZURE_VNET_RESOURCE_GROUP: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+NAMESPACE: tkg-system
+CLUSTER_CIDR: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+SERVICE_CIDR: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+CLUSTER_NAME: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+CLUSTER_PLAN: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+IDENTITY_MANAGEMENT_TYPE: "oidc"
+INFRASTRUCTURE_PROVIDER: azure
+OIDC_IDENTITY_PROVIDER_CLIENT_ID: "<app name from the oidc provider>"
+OIDC_IDENTITY_PROVIDER_CLIENT_SECRET: "<secret from oidc provicer. eg: keycloak>select realm> select app> when access type=confidential grab the secret from ceredential tab >"
+OIDC_IDENTITY_PROVIDER_GROUPS_CLAIM: "<group created in keycloak>"
+OIDC_IDENTITY_PROVIDER_ISSUER_URL: "<issuer url>"
+OIDC_IDENTITY_PROVIDER_NAME: "<name of the provider eg:keycloak>"
+OIDC_IDENTITY_PROVIDER_SCOPES: "email,profile,groups"
+OIDC_IDENTITY_PROVIDER_USERNAME_CLAIM: "<group created in keycloak>"
+CERT_DURATION: 2160h
+CERT_RENEW_BEFORE: 360h
