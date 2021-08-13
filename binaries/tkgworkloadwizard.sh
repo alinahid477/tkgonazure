@@ -1,26 +1,49 @@
 #!/bin/bash
 helpFunction()
 {
-    printf "\n"
-    echo "Usage: $0 -c path to the configfile"
-    echo -e "\t-c /path/to/configfile"
+    printf "\nYou must provide at least one parameter. (-n parameter recommended)\n\n"
+    echo "Usage: $0"
+    echo -e "\t-n name of cluster to start wizard OR"
+    echo -e "\t-f /path/to/configfile"
     exit 1 # Exit script after printing help
 }
 
-while getopts "c:" opt
+while getopts "f:n:" opt
 do
     case $opt in
-        c ) configfile="$OPTARG" ;;
+        f ) configfile="$OPTARG" ;;
+        n ) clustername="$OPTARG";;
         ? ) helpFunction ;; # Print helpFunction in case parameter is non-existent
     esac
 done
 
-# Print helpFunction in case parameters are empty
+if [ -z "$configfile" ] 
+then
+    printf "no config file path.\n"
+    if [ -z "$clustername" ] 
+    then
+        printf "no clustername given.\n"
+        helpFunction
+    else 
+        SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+        source $SCRIPT_DIR/generate_workload_cluster_config.sh -n $clustername
+    fi
+fi
+ISCONFIGEXIST=$(ls $configfile)
+# echo "is ... $ISCONFIGEXIST"
+if [ -z "$ISCONFIGEXIST" ]
+then
+    printf "\nhere\n"
+    unset configfile
+fi
+
 if [ -z "$configfile" ]
 then
-    printf "Some or all of the parameters are empty";
-    helpFunction
+    printf "\n\nNo configfile found.\n\n";
+    exit;
 else
+    printf "\n\nconfigfile: $configfile"
+
     AZURE_RESOURCE_GROUP=$(cat $configfile | sed -r 's/[[:alnum:]]+=/\n&/g' | awk -F: '$1=="AZURE_RESOURCE_GROUP"{print $2}' | xargs)
     CLUSTER_NAME=$(cat $configfile | sed -r 's/[[:alnum:]]+=/\n&/g' | awk -F: '$1=="CLUSTER_NAME"{print $2}' | xargs)
     TMC_ATTACH_URL=$(cat $configfile | grep -o 'https://[^"]*' | xargs)
@@ -45,9 +68,9 @@ fi
 if [[ ! -z "$confirmation" ]]
 then
     printf "\n\n\n"
-    printf "*****************************************\n"
-    printf "***starting k8s cluster provision.....***\n"
-    printf "*****************************************\n"
+    printf "*********************************************\n"
+    printf "*** starting tkg k8s cluster provision...****\n"
+    printf "*********************************************\n"
     printf "\n\n\n"
 
     sed -i '$ d' $configfile
