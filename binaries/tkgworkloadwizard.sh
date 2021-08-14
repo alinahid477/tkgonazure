@@ -7,7 +7,8 @@ helpFunction()
     echo -e "\t-f /path/to/configfile"
     exit 1 # Exit script after printing help
 }
-
+unset configfile
+unset clustername
 while getopts "f:n:" opt
 do
     case $opt in
@@ -29,12 +30,24 @@ then
         source $SCRIPT_DIR/generate_workload_cluster_config.sh -n $clustername
     fi
 fi
-ISCONFIGEXIST=$(ls $configfile)
+
+if [[ ! -z "$clustername" ]]
+then
+    ISCONFIGEXIST=$(ls ~/workload-clusters/ | grep $clustername)
+    if [[ ! -z "$ISCONFIGEXIST" ]]
+    then
+        configfile=~/workload-clusters/$(echo "$clustername").yaml
+    fi    
+else 
+    ISCONFIGEXIST=$(ls ~/workload-clusters/$configfile)
+fi
+
+
 # echo "is ... $ISCONFIGEXIST"
 if [ -z "$ISCONFIGEXIST" ]
 then
-    printf "\nhere\n"
-    unset configfile
+    printf "\nhere $configfile\n"
+    unset configfile    
 fi
 
 if [ -z "$configfile" ]
@@ -51,9 +64,12 @@ else
     AZ_NSG_NAME=$(echo "$CLUSTER_NAME-node-nsg")
     printf "\n below information were extracted from the file supplied:\n"
     printf "\nAZURE_RESOURCE_GROUP=$AZURE_RESOURCE_GROUP"
-    printf "\nCLUSTER_NAME=$CLUSTER_NAME"
-    printf "\nTMC_ATTACH_URL=$TMC_ATTACH_URL"
     printf "\nAZ_NSG_NAME=$AZ_NSG_NAME (derived from cluster name)"
+    printf "\nCLUSTER_NAME=$CLUSTER_NAME"
+    if [[ ! -z "$TMC_ATTACH_URL" ]]
+    then
+        printf "\nTMC_ATTACH_URL=$TMC_ATTACH_URL"
+    fi
     printf "\n\n\n"
     while true; do
         read -p "Confirm if the information is correct? [y/n] " yn
@@ -75,28 +91,40 @@ then
 
     sed -i '$ d' $configfile
 
+    printf "Accept vm image azure sku $TKG_PLAN\n\n"
+    az vm image terms accept --publisher vmware-inc --offer tkg-capi --plan $TKG_PLAN --subscription $AZ_SUBSCRIPTION_ID
+    printf "\n\nDONE.\n\n\n"
 
     printf "Creating NSG in azure\n\n"
     az network nsg create -g $AZURE_RESOURCE_GROUP -n $AZ_NSG_NAME --tags tkg $CLUSTER_NAME
     printf "\n\nDONE.\n\n\n"
 
-    printf "Creating k8s cluster\n\n"
-    tanzu cluster create --file $configfile -v 6
+    
+
+    printf "Creating k8s cluster from yaml called ~/workload-clusters/$CLUSTER_NAME.yaml\n\n"
+    tanzu cluster create  --file $configfile -v 9 --tkr $TKR_VERSION # --dry-run > ~/workload-clusters/$CLUSTER_NAME-dryrun.yaml
     printf "\n\nDONE.\n\n\n"
 
+    # printf "applying ~/workload-clusters/$CLUSTER_NAME-dryrun.yaml\n\n"
+    # kubectl apply -f ~/workload-clusters/$CLUSTER_NAME-dryrun.yaml
+    # printf "\n\nDONE.\n\n\n"
 
-    printf "Waiting 5 mins to complete cluster create"
-    sleep 5m
+    printf "\nWaiting 2 mins to complete cluster create\n"
+    sleep 2m
     printf "\n\nDONE.\n\n\n"
 
-    printf "Getting cluster info"
-    tanzu cluster get $CLUSTER_NAME
+    printf "\nGetting cluster info\n"
+    tanzu cluster kubeconfig get $CLUSTER_NAME --admin
     printf "\n\nDONE.\n\n\n"
 
-    printf "Attaching cluster to TMC"
-    kubectl create -f $TMC_ATTACH_URL
-    printf "\n\nDONE.\n\n\n"
-
+    if [[ ! -z "$TMC_ATTACH_URL" ]]
+    then
+        printf "\nAttaching cluster to TMC\n"
+        printf "\nSwitching context\n"
+        kubectl config use-context $CLUSTER_NAME-admin@$CLUSTER_NAME    
+        kubectl create -f $TMC_ATTACH_URL
+        printf "\n\nDONE.\n\n\n"
+    fi
 
     printf "\n\n\n"
     printf "*******************\n"

@@ -89,11 +89,24 @@ then
     tanzu management-cluster create --ui -y -v 8 --browser none
 
 
-    printf "\n\n\n Done. Marking as commplete.\n"
+
+    ISPINNIPED=$(kubectl get svc -n pinniped-supervisor | grep pinniped-supervisor)
+
+    if [[ ! -z "$ISPINNIPED" ]]
+    then
+        printf "\n\n\nBelow is details of the service for the auth callback url. Update your OIDC/LDAP callback accordingly.\n"
+        kubectl get svc -n pinniped-supervisor
+        printf "\nDocumentation: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-mgmt-clusters-configure-id-mgmt.html\n"
+    fi
+
+    printf "\n\n\nDone. Marking as commplete.\n\n\n"
     printf "\nCOMPLETE=YES" >> /root/.env
 else
     printf "\n\n\n Already marked as complete in the .env. If this is not desired then remove the 'COMPLETE=yes' from the .env file.\n"
-    printf "\nGoing straign to shell access.\n Type tanzu --help to get started\n"
+    printf "\nGoing straign to shell access.\n\nType tanzu --help to get started\n\n"
 fi
+
+
+printf "\n\n\nRUN ~/binaries/tkgworkloadwizard.sh to start creating workload clusters.\n\n\n"
 
 /bin/bash

@@ -25,7 +25,11 @@ then
     do
         if [[ $key == *@("AZURE"|"CLUSTER_CIDR"|"SERVICE"|"TKG_HTTP_PROXY_ENABLED")* ]]
         then
-            printf "$key: $(echo $val | sed 's,^ *,,; s, *$,,')\n" >> ~/workload-clusters/tmp.yaml
+            if [[ "$key" != @("AZURE_CONTROL_PLANE_MACHINE_TYPE"|"AZURE_NODE_MACHINE_TYPE") ]]
+            then
+                printf "$key: $(echo $val | sed 's,^ *,,; s, *$,,')\n" >> ~/workload-clusters/tmp.yaml
+            fi
+            
         fi
         
         if [[ $key == *"CLUSTER_PLAN"* ]]
@@ -63,7 +67,7 @@ then
             printf "\nThis is a required field.\n"
         else
             printf "\ncluster name accepted: $CLUSTER_NAME"
-            printf "CLUSTER_NAME: $inp\n" >> ~/workload-clusters/tmp.yaml
+            printf "CLUSTER_NAME: $CLUSTER_NAME\n" >> ~/workload-clusters/tmp.yaml
             break
         fi
     done
@@ -116,8 +120,17 @@ then
     fi
     printf "WORKER_MACHINE_COUNT: $inp\n" >> ~/workload-clusters/tmp.yaml
 
-    
     printf "\n\n"
+
+
+    read -p "TMC_ATTACH_URL:(press enter to leave it empty and not attach to tmc) " inp
+    if [[ ! -z "$inp" ]]
+    then
+        printf "TMC_ATTACH_URL: $inp\n" >> ~/workload-clusters/tmp.yaml
+    fi
+    
+    
+    printf "\n\n======================\n\n"
 
 
     printf "ENABLE_CEIP_PARTICIPATION: \"true\"\n" >> ~/workload-clusters/tmp.yaml

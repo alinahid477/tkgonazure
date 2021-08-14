@@ -1,12 +1,22 @@
-# Tanzu on azure
+# Tanzu Kubernetes Grid on azure
+
+![Alt text](images/logo.png?raw=true "Tanzu Kubernetes Grid Wizard (for TKGm on Azure)")
+
+**The aim is to simplify and provide a smooth user experience with TKGm.**
+
+The official documentation of Tanzu Kubernetes Grid (https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-index.html) contains a detailed way of provisioning management and workload clusters which requires several plugins installed lots for file manipulations and files may conflict if they are not organised properly.
+
+This docker container is a bootstrapped way for achieving the same but a lot simpler. eg: You don't need to install anything on your host machine. Infact, you dont need to install anything. This bootstrapped docker taked care of it. It also helps with organised the files location. eg: Per management cluster and all of its workload cluster you can have one instance of this docker.
 
 
 ## Pre-Requisites
 
+### Host machine
+You need to have docker-ce or docker-ee on host machine.
 
 ### Download and install necessary binaries
 
-Following this documentation: 
+Official documentation: 
 https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-install-cli.html
 
 Steps:
@@ -56,30 +66,52 @@ Simple enough with this bootstrapped docker.
 
 # Create workload clusters on Azure using Tanzu
 
-Read details in the official documentation here: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-tanzu-k8s-clusters-deploy.html
+The official documentation here: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-tanzu-k8s-clusters-deploy.html
 
-***Using this boostrapped docker when you get shell access you can use it to create workload clusters using tanzu cli on azure*** 
+***Using this boostrapped docker when you get shell access you can use it to create workload clusters using tanzu cli OR tkgworkloadwizard on azure*** 
 
-Here's a summarised version of creating workoad cluster using this bootstrapped docker:
-- `cp .tanzu/tkg/clusterconfigs/n44jxxxx.yaml workload-clusters/my-worload-cluster1.yaml`
-
-    Where n44jxxxx is the randomly generated (via the wizard) name of the file based on which the management cluster was created.  
-- change the below values:
-    - CLUSTER_NAME: my-workload-cluster1 (or give any appropriate name)
-    - WORKER_MACHINE_COUNT: 3 (This is optional. Change `CLUSTER_PLAN: prod` for 3 control place node and 3 worker node. Since the default number of worker node for `CLUSTER_PLAN: dev` is 1, I am overwriting it with this value. It is also posibble to overwrite control plane node count with `CONTROL_PLANE_MACHINE_COUNT`.)
+## Workload creation Wizard:
 
 
-# Enable Identity Management After Management Cluster Deployment
+There are 2 ways to use the wizard:
+- the `-f` flag: Create your own configfile and supply the location here. (as per documented here: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-tanzu-k8s-clusters-azure.html). You can add an additional parameter called `TMC_ATTACH_URL` in the config file for attaching the cluster to tmc. The `tmc attach` is a special addition to this docker.
+- the `-n` flag: This will instruct the wizard to go into a wizard/guided mode and generate the config file and install the k8s cluster with user input and prompts. 
+
+***For intermidiate level users tkgworkloadwizard -n is highly recommended.***
+
+Once you get shell access to the docker container, follow the below steps
+
+- run `tanzu kubernetes-release get` to get the Tanzu Kubernetes Release Version (eg: v1.20.4---vmware.3-tkg.1) and record a compatible=true and upgradable=true version. Fill the value in .env file for `TKR_VERSION` field. 
+- Exit the docker (`exit`) and enter again by running `docker run -it --rm --net=host -v ${PWD}:/root/ -v /var/run/docker.sock:/var/run/docker.sock --name tkgonazure tkgonazure /bin/bash`. This is to reload the new value in environment variable context.
+- `~/binaries/tkgworkloadwizard.sh -n name-of-workload-k8s-cluster`
+- The wizard will handle most of the config generation based on the config from management cluster (eg: Azure login, subscriptions etc)
+- The wizard will also prompt for the below configurations:
+    - CLUSTER_NAME (The wizard will auto populate from the -n paramater)
+    - CLUSTER_PLAN (The wizard will prompt based on the value of management-cluster. This is optional. The wizard will have default value based on the management cluster provisioned. But feel free to change. For `CLUSTER_PLAN: prod` it is 3 control plane nodes and 3 worker nodes. For `CLUSTER_PLAN: dev` it is 1 control plane node and 1 worker node.)
+    - AZURE_CONTROL_PLANE_MACHINE_TYPE: (The will have default value matched to management-cluster. But you can overwrite it by typing a new value (eg: Standard_B2s). ***Minimum vCPU requirement is: 2***. Check the machine types here: https://docs.microsoft.com/en-us/azure/virtual-machines/sizes)
+    - AZURE_NODE_MACHINE_TYPE (Same instruction as above. This is for worker nodes.)
+    - CONTROL_PLANE_MACHINE_COUNT (The wizard will set default value matching to the management cluster. You can overwrite it here)
+    - WORKER_MACHINE_COUNT (Same instruction as above)
+    - TMC_ATTACH_URL (This is optional. If you want to attach this cluster to TMC input the url here. *Note: Do not input the entire string here. Input only the URL*)
+- The wizard will generate the config file and ask you to review. You can also modify this file.
+- Once you have confirmed the configfile on the wizard prompt, it will then proceed to install the workload cluster based on the configfile. This process takes some time (approx 5-15mins depending on the size of the k8s cluster) so grab a coffee or beer or go for a short walk.
+
+
+
+# Enable Identity Management After Management Cluster Deployment (optional)
+
+*This is if you have not registered OIDC/LDAP during the management cluster installation time.*
 
 Doc: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-cluster-lifecycle-enable-identity-management.html
 
 sample config in ~/identity-management/oidc/azure-oidc.sample.yaml
 
 Steps:
-- Fill out the value in the sample config file (that one is for Azure, AWS/vSphere would be similar)
-- export _TKG_CLUSTER_FORCE_ROLE="management"
-- export FILTER_BY_ADDON_TYPE="authentication/pinniped"
-- tanzu cluster create CLUSTER-NAME --dry-run -f ~/identity-management/oidc/azure-oidc.sample.yaml > ~/identity-management/oidc/CLUSTER-NAME-example-secret.yaml
+- `cp identity-management/oidc/azure-oidc.sample.yaml identity-management/oidc/azure-oidc.yaml`
+- Fill out the value in the sample config file at `identity-management/oidc/azure-oidc.yaml` (that one is for Azure, AWS/vSphere would be similar.)
+- `export _TKG_CLUSTER_FORCE_ROLE="management"`
+- `export FILTER_BY_ADDON_TYPE="authentication/pinniped"`
+- `tanzu cluster create CLUSTER-NAME --dry-run -f ~/identity-management/oidc/azure-oidc.sample.yaml > ~/identity-management/oidc/CLUSTER-NAME-example-secret.yaml`
 - `kubectl apply -f ~/identity-management/oidc/CLUSTER-NAME-example-secret.yaml`
 - check by running `kubectl get app pinniped -n tkg-system`
 - if "reconcile failed" then do `kubectl get app pinniped -n tkg-system -o yaml`
@@ -87,17 +119,18 @@ Steps:
 
 
 
-## Handy Commands
+
+
+# Handy Commands
 
 
 
-delete nsg
+### delete nsg
 ```
 az network nsg delete -g tkgm -n tkg-az-cluster-1-node-nsg
 ```
 
-
-When the management cluster config is already in place we can simple run the below command. (To generate the yaml always use the wizard.)
+### When the management cluster config is already in place we can simply run the below command. (To generate the yaml always use the wizard.)
 ```
 tanzu management-cluster create --file /root/.tanzu/tkg/clusterconfigs/l3ew4cqkzw.yaml -v 6
 ```
@@ -108,7 +141,7 @@ to extract the docker-on-docker ip:
 $(cat /etc/hosts | grep $HOSTNAME | awk '{print $1}')
 ```
 
-Below is not needed any more as I am using --net=host. BUT if I didn't use it then one to tell docker-on-docker (where kind will be running) is below and create port forwarding manually.
+Below is not needed any more, as I am using --net=host. BUT if I didn't use it then one to tell docker-on-docker (where kind will be running) is below and create port forwarding manually.
 eg: https://www.conjur.org/blog/tutorial-spin-up-your-kubernetes-in-docker-cluster-and-they-will-come/
 ```
 docker ps | grep tkg-kind | awk '{print $11}'
