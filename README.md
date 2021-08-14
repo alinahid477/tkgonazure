@@ -35,7 +35,8 @@ Below are the values required:
 - AZ_TKG_APP_ID={APP_ID is also known as CLIENT_ID. in portal search 'app registration' > New Regitration. the process is documented here: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-mgmt-clusters-azure.html#register-tanzu-kubernetes-grid-as-an-azure-client-app-3 }
 - AZ_TKG_APP_CLIENT_SECRET={recorded secret from the above}
 - AZ_SUBSCRIPTION_ID={azure subscription id}
-- TKG_PLAN={default: k8s-1dot20dot5-ubuntu-2004 --> as this was the latest at the time of writing this. Modify it to the version your prefer, notice how it is 1dot20dot5 instead of 1.20.5. Follow the same. IMPORTANT: In Tanzu Kubernetes Grid v1.3.1, the default cluster image --plan value is k8s-1dot20dot5-ubuntu-2004, based on Kubernetes version 1.20.5 and the machine OS, Ubuntu 20.04. Run the following command} 
+- TKG_PLAN={default: `k8s-1dot20dot4-ubuntu-2004` --> as this was the latest at the time of writing this. Modify it to the version your prefer, notice how it is 1dot20dot4 instead of 1.20.4. Follow the same. IMPORTANT: In Tanzu Kubernetes Grid v1.3.1, the default cluster image --plan value is k8s-1dot20dot4-ubuntu-2004, based on Kubernetes version 1.20.4 and the machine OS, Ubuntu 20.04. Run the following command} 
+- TKR_VERSION={default `v1.20.4---vmware.3-tkg.1`. This value is used for workload cluster creation using tkgworkloadwizard.sh. After you provision the management cluster you can get updated value by running `tanzu kubernetes-release get` and picking a version that is compatible=true and upgradable=true. Also adjust the `TKG_PLAN` according to the TKR you pick. ***Without right TKR and TKG_PLAN combo you will run into this error `ResourcePurchaseValidationFailed" Message="User failed validation to purchase resources. Error message: 'You have not accepted the legal terms on this subscription: 'xxxxx-xxx-xxx-000-203384034nho' for this plan. Before the subscription can be used, you need to accept the legal terms of the image.`*** }
 - TKG_ADMIN_EMAIL={this email address will be needed for private and public key purpose. Nothing will be emailed to this address. Just signature purpose stuff.}
 
 
@@ -81,7 +82,7 @@ There are 2 ways to use the wizard:
 
 Once you get shell access to the docker container, follow the below steps
 
-- run `tanzu kubernetes-release get` to get the Tanzu Kubernetes Release Version (eg: v1.20.4---vmware.3-tkg.1) and record a compatible=true and upgradable=true version. Fill the value in .env file for `TKR_VERSION` field. 
+- run `tanzu kubernetes-release get` to get the Tanzu Kubernetes Release Version (eg: v1.20.4---vmware.3-tkg.1) and record a compatible=true and upgradable=true version. Fill the value in .env file for `TKR_VERSION` field. Also adjust the `TKG_PLAN` according to the TKR you pick. 
 - Exit the docker (`exit`) and enter again by running `docker run -it --rm --net=host -v ${PWD}:/root/ -v /var/run/docker.sock:/var/run/docker.sock --name tkgonazure tkgonazure /bin/bash`. This is to reload the new value in environment variable context.
 - `~/binaries/tkgworkloadwizard.sh -n name-of-workload-k8s-cluster`
 - The wizard will handle most of the config generation based on the config from management cluster (eg: Azure login, subscriptions etc)
