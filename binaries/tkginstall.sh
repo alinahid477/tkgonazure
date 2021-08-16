@@ -106,7 +106,7 @@ else
     printf "\nGoing straign to shell access.\n\nType tanzu --help to get started\n\n"
 fi
 
-
+ls -l /root/binaries/*.sh | awk '{print $9}' | xargs chmod +x
 printf "\n\n\nRUN ~/binaries/tkgworkloadwizard.sh to start creating workload clusters.\n\n\n"
 
 /bin/bash

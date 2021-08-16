@@ -42,8 +42,8 @@ RUN cd /tmp && mkdir tanzu \
 	&& tanzu plugin clean
 
 
-COPY binaries/tkginstall.sh /usr/local/tkginstall.sh
-RUN chmod +x /usr/local/tkginstall.sh
+COPY binaries/init.sh /usr/local/init.sh
+RUN chmod +x /usr/local/init.sh
 
 
-ENTRYPOINT [ "/usr/local/tkginstall.sh"]
+ENTRYPOINT [ "/usr/local/init.sh"]
