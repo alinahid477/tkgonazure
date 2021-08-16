@@ -33,6 +33,14 @@ But the above is simplified. All you need to do is to follow below steps:
     - Download VMware Tanzu CLI for Linux
         - then `mv ~/Downloads/tanzu-cli-bundle-v1.x.x-linux-amd64.tar binaries/tanzu-cli-bundle-linux-amd64.tar`
 
+### tmc binary (optional but recommended)
+
+Download the tmc binary from `https://{yourorg}.tmc.cloud.vmware.com/clidownload` and place under `binaries` directory. (eg: `mv ~/Downloads/tmc binaries/`)
+
+Without the TMC binary the only option is to use the `TMC_ATTACH_URL` if you want to attach k8s to TMC. With this binary in place it will have more embedded experience meaning the cluster entry in TMC will done from here rather than you creating it manually in tmc to generate the attach url.
+
+***if you do not wish to add tmc binary you MUST comment the lines for adding tmc (line #46 #47) from Dockerfile***
+
 
 ### .env file
 
@@ -40,12 +48,28 @@ But the above is simplified. All you need to do is to follow below steps:
 
 Below are the values required:
 - AZ_TENANT_ID={search 'tenant properties' in portal to get the azure tenant id}
-- AZ_TKG_APP_ID={APP_ID is also known as CLIENT_ID. in portal search 'app registration' > New Regitration. the process is documented here: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-mgmt-clusters-azure.html#register-tanzu-kubernetes-grid-as-an-azure-client-app-3 }
+- AZ_TKG_APP_ID={APP_ID is also known as CLIENT_ID. To generate app id follow the below steps:}
+    - In Azure portal console search 'app registration' > New Regitration. 
+    - The process is documented here: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-mgmt-clusters-azure.html#register-tanzu-kubernetes-grid-as-an-azure-client-app-3
 - AZ_TKG_APP_CLIENT_SECRET={recorded secret from the above}
 - AZ_SUBSCRIPTION_ID={azure subscription id}
-- TKG_PLAN={default: `k8s-1dot20dot4-ubuntu-2004` --> as this was the latest at the time of writing this. Modify it to the version your prefer, notice how it is 1dot20dot4 instead of 1.20.4. Follow the same. IMPORTANT: In Tanzu Kubernetes Grid v1.3.1, the default cluster image --plan value is k8s-1dot20dot4-ubuntu-2004, based on Kubernetes version 1.20.4 and the machine OS, Ubuntu 20.04. Run the following command} 
-- TKR_VERSION={default `v1.20.4---vmware.3-tkg.1`. This value is used for workload cluster creation using tkgworkloadwizard.sh. After you provision the management cluster you can get updated value by running `tanzu kubernetes-release get` and picking a version that is compatible=true and upgradable=true. Also adjust the `TKG_PLAN` according to the TKR you pick. ***Without right TKR and TKG_PLAN combo you will run into this error `ResourcePurchaseValidationFailed" Message="User failed validation to purchase resources. Error message: 'You have not accepted the legal terms on this subscription: 'xxxxx-xxx-xxx-000-203384034nho' for this plan. Before the subscription can be used, you need to accept the legal terms of the image.`*** }
-- TKG_ADMIN_EMAIL={this email address will be needed for private and public key purpose. Nothing will be emailed to this address. Just signature purpose stuff.}
+- TKG_PLAN={default: `k8s-1dot20dot4-ubuntu-2004`}
+    - The default value is the latest at the time of writing this. 
+    - Modify it to the version your prefer.
+    - Notice the `1dot20dot4` part instead of `1.20.4`. Follow the same. 
+    - IMPORTANT: In Tanzu Kubernetes Grid v1.3.1, the default cluster image --plan value is k8s-1dot20dot4-ubuntu-2004, based on Kubernetes version 1.20.4 and the machine OS, Ubuntu 20.04. 
+    - Run `tanzu kubernetes-release get` to check the latest.
+- TKR_VERSION={default `v1.20.4---vmware.3-tkg.1`}
+    - The default value is the latest at the time of writing this. 
+    - This value is used for workload cluster creation using tkgworkloadwizard.sh. 
+    - After you provision the management cluster you can get updated value by running `tanzu kubernetes-release get` and picking a version that is compatible=true and upgradable=true. 
+    - Also adjust the `TKG_PLAN` according to the TKR you pick. 
+    - ***Without right TKR and TKG_PLAN combo you will run into this error `ResourcePurchaseValidationFailed" Message="User failed validation to purchase resources. Error message: 'You have not accepted the legal terms on this subscription: 'xxxxx-xxx-xxx-000-203384034nho' for this plan. Before the subscription can be used, you need to accept the legal terms of the image.`***
+- TKG_ADMIN_EMAIL={this email address will be needed for private and public key purpose. Nothing will be emailed to this address. Just for signature purpose stuff.}
+- TMC_API_TOKEN={tmc api token for TMC authentication. Follow below steps to generate a TMC API Token:}
+    - Navigate to https://console.cloud.vmware.com/csp/gateway/portal/#/user/profile (OR on tmc console click username at the top right corner > click My Accout)
+    - API Tokens tab
+    - Generate Token and Record the token value. Keep it in a secret secured location as this is the only time you will have opportunity to record it.
 
 
 ## Run / Start
@@ -86,7 +110,7 @@ The official documentation here: https://docs.vmware.com/en/VMware-Tanzu-Kuberne
 
 There are 2 ways to use the wizard:
 - the `-f` flag: (`~/binaries/tkgworkloadwizard.sh -f /path/to/configfile`):
-    - Create your own configfile and supply the location here. (documentation to create config file here: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-tanzu-k8s-clusters-azure.html). You can add an additional parameter called `TMC_ATTACH_URL` in the config file for attaching the cluster to tmc. The `tmc attach` is a special addition to this docker.
+    - Create your own configfile and supply the location here. (documentation to create config file here: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-tanzu-k8s-clusters-azure.html). You can add an additional parameter called `TMC_ATTACH_URL` or `TMC_CLUSTER_GROUP` in the config file for attaching the cluster to tmc. This is a special addition to this bootstrap docker.
 
 - the `-n` flag: (`~/binaries/tkgworkloadwizard.sh -n mycluster1` -- **Recommended Approach**) 
     - This will instruct to go into a wizard/guided mode and generate the config file and install the k8s cluster with user input and prompts. For intermidiate usecases tkgworkloadwizard -n is highly recommended.

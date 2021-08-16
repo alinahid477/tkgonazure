@@ -123,10 +123,15 @@ then
     printf "\n\n"
 
 
-    read -p "TMC_ATTACH_URL:(press enter to leave it empty and not attach to tmc) " inp
+    read -p "TMC_ATTACH_URL or TMC_CLUSTER_GROUP:(press enter to leave it empty and not attach to tmc OR provide a TMC attach url or Cluster Group Name) " inp
     if [[ ! -z "$inp" ]]
     then
-        printf "TMC_ATTACH_URL: $inp\n" >> ~/workload-clusters/tmp.yaml
+        if [[ $inp == *"https:"* ]]
+        then
+            printf "TMC_ATTACH_URL: $inp\n" >> ~/workload-clusters/tmp.yaml
+        else
+            printf "TMC_CLUSTER_GROUP: $inp\n" >> ~/workload-clusters/tmp.yaml
+        fi
     fi
     
     

@@ -126,7 +126,21 @@ then
         kubectl config use-context $CLUSTER_NAME-admin@$CLUSTER_NAME    
         kubectl create -f $TMC_ATTACH_URL
         printf "\n\nDONE.\n\n\n"
+    else
+        ISTMCEXISTS=$(tmc --help)
+        if [[ ! -z $ISTMCEXISTS && ! -z $TMC_CLUSTER_GROUP ]]
+        then
+            printf "\nAttaching cluster to TMC\n"
+            printf "\nTMC Login\n"
+            tmc login
+            printf "\nTMC Attach..\n"
+            epoc=$(date +%s)
+            tmc cluster attach --name $CLUSTER_NAME --cluster-group $TMC_CLUSTER_GROUP --output /tmp/attach-file-$epoc.yaml 
+            kubectl apply -f /tmp/attach-file-$epoc.yaml
+        fi
     fi
+    
+    
 
     printf "\n\n\n"
     printf "*******************\n"
