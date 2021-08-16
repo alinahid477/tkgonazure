@@ -61,16 +61,27 @@ else
 
     AZURE_RESOURCE_GROUP=$(cat $configfile | sed -r 's/[[:alnum:]]+=/\n&/g' | awk -F: '$1=="AZURE_RESOURCE_GROUP"{print $2}' | xargs)
     CLUSTER_NAME=$(cat $configfile | sed -r 's/[[:alnum:]]+=/\n&/g' | awk -F: '$1=="CLUSTER_NAME"{print $2}' | xargs)
-    TMC_ATTACH_URL=$(cat $configfile | grep -o 'https://[^"]*' | xargs)
-    TMC_ATTACH_URL=$(echo "\"$TMC_ATTACH_URL\"")
+    TMC_CLUSTER_GROUP=$(cat $configfile | sed -r 's/[[:alnum:]]+=/\n&/g' | awk -F: '$1=="TMC_CLUSTER_GROUP"{print $2}' | xargs)
+    if [ -z "$TMC_CLUSTER_GROUP" ]
+    then
+        TMC_ATTACH_URL=$(cat $configfile | grep -o 'https://[^"]*' | xargs)
+        if [[ ! -z $TMC_ATTACH_URL ]]
+        then
+            TMC_ATTACH_URL=$(echo "\"$TMC_ATTACH_URL\"")
+        fi
+    fi    
     AZ_NSG_NAME=$(echo "$CLUSTER_NAME-node-nsg")
     printf "\n below information were extracted from the file supplied:\n"
     printf "\nAZURE_RESOURCE_GROUP=$AZURE_RESOURCE_GROUP"
     printf "\nAZ_NSG_NAME=$AZ_NSG_NAME (derived from cluster name)"
     printf "\nCLUSTER_NAME=$CLUSTER_NAME"
-    if [[ ! -z "$TMC_ATTACH_URL" ]]
+    if [[ ! -z $TMC_ATTACH_URL ]]
     then
         printf "\nTMC_ATTACH_URL=$TMC_ATTACH_URL"
+    fi
+    if [[ ! -z $TMC_CLUSTER_GROUP ]]
+    then
+        printf "\nTMC_CLUSTER_GROUP=$TMC_CLUSTER_GROUP"
     fi
     printf "\n\n\n"
     while true; do
