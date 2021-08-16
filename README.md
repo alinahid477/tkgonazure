@@ -2,13 +2,13 @@
 
 <img src="images/logo.png" alt="Tanzu Kubernetes Grid Wizard (for TKGm on Azure)" width=200 height=220/>
 
-**The aim is to simplify and provide a smooth user experience with TKGm.**
+**The aim is to simplify and quick start with TKGm.**
 
 The official documentation of Tanzu Kubernetes Grid (https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-index.html) contains a detailed way of provisioning management and workload clusters which requires several plugins installed lots for file manipulations and files may conflict if they are not organised properly.
 
-This docker container is a bootstrapped way for achieving the same but a lot simpler. eg: You don't need to install anything on your host machine. Infact, you dont need to install anything. This bootstrapped docker taked care of it. It also helps with organised the files location. eg: Per management cluster and all of its workload cluster you can have one instance of this docker.
+This docker container is a bootstrapped way for achieving the same but a lot simpler. eg: You don't need to install anything on your host machine. Infact, you dont need to install anything. This bootstrapped docker takes care of all the installation prerequisits. It also helps with organising the files location (*eg: Per management cluster and all of its workload cluster you can have one instance of this docker.*)
 
-This is a bootstrap environment with the below pre-installed and some handy wizards to create management and workload clusters and attach clusters to tmc
+The bootstrap environment comes with the below pre-installed and some handy wizards to create management and workload clusters and attach clusters to tmc
 - az cli
 - kubectl
 - tmc cli (optional)
@@ -20,7 +20,7 @@ This is a bootstrap environment with the below pre-installed and some handy wiza
 ### Host machine
 You need to have docker-ce or docker-ee on host machine.
 
-### Tanzu CLI
+### Tanzu CLI binary bundle
 
 Official documentation: 
 https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-install-cli.html
@@ -58,6 +58,13 @@ docker run -it --rm --net=host -v ${PWD}:/root/ -v /var/run/docker.sock:/var/run
 *Yes, I am using --net=host ---> since this is only a bootstrapped container scalability is not of concern and since I will only run this to provision tkgm on azure and only on my localmachine or a jump vm security is not of concern*
 
 # Creating Tanzu Management Cluster on Azure
+
+- run the below
+```
+~/binaries/tkginstall.sh
+```
+- and follow prompt
+
 
 *`tkginstall` wizard When run the first time (.env is NOT marked as COMPLETE eg: .env does not have COMPLETE=yes) and it initiates  management cluster creation. Upon completion of management cluster provision, it marks the .env as COMPLETE. When you run `tkginstall` 2nd or more times (.env is marked as COMPLETE eg: .env file contains COMPLETE=yes) and it simple gives shell access where you can execute tanzu commands*
 
