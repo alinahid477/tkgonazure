@@ -1,4 +1,6 @@
 #!/bin/bash
+export $(cat /root/.env | xargs)
+
 helpFunction()
 {
     printf "\nYou must provide at least one parameter. (-n parameter recommended)\n\n"
