@@ -6,6 +6,7 @@
 .local
 .azure
 .ssh
+.vmware-cna-saas
 
 .kube-tkg
 .kube/*

@@ -122,8 +122,8 @@ then
     # kubectl apply -f ~/workload-clusters/$CLUSTER_NAME-dryrun.yaml
     # printf "\n\nDONE.\n\n\n"
 
-    printf "\nWaiting 2 mins to complete cluster create\n"
-    sleep 2m
+    printf "\nWaiting 1 mins to complete cluster create\n"
+    sleep 1m
     printf "\n\nDONE.\n\n\n"
 
     printf "\nGetting cluster info\n"
@@ -137,17 +137,37 @@ then
         kubectl config use-context $CLUSTER_NAME-admin@$CLUSTER_NAME    
         kubectl create -f $TMC_ATTACH_URL
         printf "\n\nDONE.\n\n\n"
+        printf "\nWaiting 1 mins to complete cluster attach\n"
+        sleep 1m
+        printf "\n\nDONE.\n\n\n"
     else
         ISTMCEXISTS=$(tmc --help)
         if [[ ! -z $ISTMCEXISTS && ! -z $TMC_CLUSTER_GROUP ]]
         then
             printf "\nAttaching cluster to TMC\n"
-            printf "\nTMC Login\n"
-            tmc login
+            printf "\nChecking existing TMC context..."
+            EXISTING_CONTEXT=$(tmc system context list | awk -v i=2 -v j=1 'FNR == i {print $j}')
+            if [ -z "$EXISTING_CONTEXT" ]
+            then
+                if [ -z "$TMC_CONTEXT" ]
+                then
+                    TMC_CONTEXT=tkgonazure
+                fi
+                printf "\nNo existing context found. TMC Login using context \'$TMC_CONTEXT\'...\n"
+                tmc login --name $TMC_CONTEXT --no-configure
+            else
+                printf "\nContext $EXISTING_CONTEXT found. Using the context...\n"
+                tmc system context use $EXISTING_CONTEXT
+            fi
+            
             printf "\nTMC Attach..\n"
-            epoc=$(date +%s)
+            epoc=$(date +%s) 
             tmc cluster attach --name $CLUSTER_NAME --cluster-group $TMC_CLUSTER_GROUP --output /tmp/attach-file-$epoc.yaml 
+            kubectl config use-context $CLUSTER_NAME-admin@$CLUSTER_NAME
             kubectl apply -f /tmp/attach-file-$epoc.yaml
+            printf "\nWaiting 1 mins to complete cluster attach\n"
+            sleep 1m
+            printf "\n\nDONE.\n\n\n"
         fi
     fi
     
