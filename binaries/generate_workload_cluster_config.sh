@@ -16,7 +16,7 @@ fi
 printf "\n\nLooking for management cluster config at: ~/.tanzu/tkg/clusterconfigs/\n"
 mgmtconfigfile=$(ls ~/.tanzu/tkg/clusterconfigs/ | awk -v i=1 -v j=1 'FNR == i {print $j}')
 printf "\n\nRequired management cluster config file: $mgmtconfigfile\n"
-if [[ ! -z "$mgmtconfigfile" ]]
+if [[ ! -z $mgmtconfigfile ]]
 then
     mgmtconfigfile=~/.tanzu/tkg/clusterconfigs/$mgmtconfigfile 
     echo "" > ~/workload-clusters/tmp.yaml
@@ -124,7 +124,7 @@ then
 
 
     read -p "TMC_ATTACH_URL or TMC_CLUSTER_GROUP:(press enter to leave it empty and not attach to tmc OR provide a TMC attach url or Cluster Group Name) " inp
-    if [[ ! -z "$inp" ]]
+    if [[ ! -z $inp ]]
     then
         if [[ $inp == *"https:"* ]]
         then
