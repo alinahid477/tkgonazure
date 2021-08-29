@@ -14,6 +14,7 @@ The bootstrap environment comes with the below pre-installed and some handy wiza
 - tmc cli (optional)
 - tkginstall --> lets you create TKG on azure with UI.
 - tkgworkloadwizard --> lets you create TKG Workload cluster with simple prompts.
+- attact_to_tmc --> lets you attach cluster to Tanzu Mission Control
 
 ## Pre-Requisites
 
