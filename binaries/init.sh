@@ -74,5 +74,6 @@ printf "\nYour available wizards are:\n"
 echo -e "\t~/binaries/tkginstall.sh"
 echo -e "\t~/binaries/tkgworkloadwizard.sh --help"
 
+cd ~
 
 /bin/bash
