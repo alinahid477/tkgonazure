@@ -1,6 +1,6 @@
 # Tanzu Kubernetes Grid Wizard for TKGm on Azure
 
-<img src="images/logo.png" alt="Tanzu Kubernetes Grid Wizard (for TKGm on Azure)" width=200 height=200/>
+<img src="images/logo.png" alt="Tanzu Kubernetes Grid Wizard (for TKGm on Azure)" width=200 height=210/>
 
 **The aim is to simplify and quick start with TKGm.**
 
