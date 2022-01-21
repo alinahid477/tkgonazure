@@ -18,13 +18,13 @@ do
     esac
 done
 
-if [ -z "$TMC_CLUSTER_GROUP" ] 
+if [[ -z $TMC_CLUSTER_GROUP ]]
 then
     printf "\n\nError: No cluster group given. Exit...\n"
     exit
 fi
 
-if [ -z "$CLUSTER_NAME" ]
+if [[ -z $CLUSTER_NAME ]]
 then
     printf "\n\nError: No cluster name given. Exit...\n"
     exit
@@ -32,12 +32,12 @@ fi
 
 printf "\n\nChecking cluster...\n"
 caniswitchcontext=$(kubectl config use-context $CLUSTER_NAME-admin@$CLUSTER_NAME)
-if [ -z $caniswitchcontext ]
+if [[ -z $caniswitchcontext ]]
 then
     printf "\n\nError: No k8s cluster exist. Exit...\n\n"
     exit
     isclusterexist=$(kubectl get ns | grep kube-system | awk '{print $1}')
-    if [ -z "$isclusterexist" ]
+    if [[ -z $isclusterexist ]]
     then
         printf "\n\nError: No k8s cluster exist. Exit...\n\n"
         exit
@@ -51,9 +51,9 @@ then
     printf "\nAttaching cluster to TMC\n"
     printf "\nChecking existing TMC context..."
     EXISTING_CONTEXT=$(tmc system context list | awk -v i=2 -v j=1 'FNR == i {print $j}')
-    if [ -z "$EXISTING_CONTEXT" ]
+    if [[ -z $EXISTING_CONTEXT ]]
     then
-        if [ -z "$TMC_CONTEXT" ]
+        if [[ -z $TMC_CONTEXT ]]
         then
             TMC_CONTEXT=tkgonazure
         fi
@@ -77,7 +77,7 @@ else
     printf "\n\ntmc command does not exist.\n\n"
     printf "\n\nChecking for binary presence...\n\n"
     IS_TMC_BINARY_EXISTS=$(ls ~/binaries/ | grep tmc)
-    if [ -z "$IS_TMC_BINARY_EXISTS" ]
+    if [[ -z $IS_TMC_BINARY_EXISTS ]]
     then
         printf "\n\nBinary does not exist in ~/binaries directory.\nPlease download tmc binary and place in the ~/binaries directory.\n"
         printf "\nAfter you have placed the binary file you can, additionally, uncomment the tmc relevant in the Dockerfile.\n\n"
