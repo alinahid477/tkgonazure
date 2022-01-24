@@ -94,7 +94,7 @@ else
     done
 fi
 
-if [[ ! -z $confirmation ]]
+if [[ -n $confirmation ]]
 then
     printf "\n\n\n"
     printf "*********************************************\n"

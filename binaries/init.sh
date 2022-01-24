@@ -2,26 +2,48 @@
 
 install_tanzu_plugin()
 {
-    printf "\nChecking tanzu unpacked...\n\n"
-    isexists=$(ls /tmp | grep -w "tanzu$")
-    if [[ -z $isexists ]]
+    tanzubundlename=''
+    printf "\nChecking tanzu bundle...\n\n"
+    cd /tmp
+    sleep 1
+    numberoftarfound=$(find ./*tar* -type f -printf "." | wc -c)
+    if [[ $numberoftarfound == 1 ]]
     then
-        printf "\nChecking tanzu cli bundle in ~/binaries...\n"
-        isexists=$(ls /binaries | grep -w "tanzu-cli-bundle-linux-amd64.tar$")
-        if [[ -z $isexists ]]
-        then
-            printf "\nError: Bundle ~/binaries/tanzu-cli-bundle-linux-amd64.tar not found. Exiting..\n"
-            exit
-        fi
-        printf "\nUnpacking...\n"
-        cp ~/binaries/tanzu-cli-bundle-linux-amd64.tar /tmp
-        cd /tmp 
-        mkdir tanzu
-        tar -xvf tanzu-cli-bundle-linux-amd64.tar -C tanzu/
-        cd ~
+        tanzubundlename=$(find ./*tar* -printf "%f\n")
     fi
-    cd ~
-    tanzu plugin install --local ~/tmp/tanzu/cli all
+    if [[ $numberoftarfound -gt 1 ]]
+    then
+        printf "\nfound more than 1 bundles..\n"
+        find ./*tar* -printf "%f\n"
+        printf "Error: only 1 tar file is allowed in ~/binaries dir.\n"
+        printf "\n\n"
+        exit 1
+    fi
+
+    if [[ $numberoftarfound -lt 1 ]]
+    then
+        printf "\nNo tanzu bundle found. Please place the tanzu bindle in ~/binaries and rebuild again. Exiting...\n"
+        exit 1
+    fi
+    printf "\nTanzu Bundle: $tanzubundlename. Installing..."
+    # sleep 1
+    # mkdir tanzu
+    # tar -xvf $tanzubundlename -C tanzu/
+
+    if [[ $tanzubundlename == "tce"* ]]
+    then
+        cd /tmp/tanzu/
+        tcefolder=$(ls | grep tce)
+        cd $tcefolder
+        export ALLOW_INSTALL_AS_ROOT=true
+        ./install.sh
+    else
+        cd /tmp/tanzu/cli/core
+        versionfolder=$(ls | grep v)
+        cd $versionfolder
+        install core/$versionfolder/tanzu-core-linux_amd64 /usr/local/bin/tanzu
+        tanzu plugin install --local /tmp/tanzu/cli all
+    fi
 }
 
 
@@ -56,55 +78,48 @@ else
     printf "\n\ntmc command found.\n\n"
 fi
 
-printf "\nChecking Tanzu plugin...\n"
-
-ISINSTALLED=$(tanzu management-cluster --help)
-if [[ $ISINSTALLED == *"unknown"* ]]
+cd ~
+printf "\nChecking Tanzu if plugins are installed ...\n"
+ISINSTALLED=$(find ~/.local/share/tanzu-cli/* -printf '%f\n' | grep management-cluster)
+if [[ -z $ISINSTALLED ]]
 then
-    printf "\n\ntanzu plugin management-cluster not found. installing...\n"
+    printf "\n\ntanzu plugin management-cluster not found. installing...\n\n"
     install_tanzu_plugin
     printf "\n\n"
 fi
 
-ISINSTALLED=$(tanzu cluster --help)
-if [[ $ISINSTALLED == *"unknown"* ]]
+
+ISINSTALLED=$(find ~/.local/share/tanzu-cli/* -printf '%f\n' | grep "tanzu-plugin-cluster$")
+if [[ -z $ISINSTALLED ]]
 then
     printf "\n\ntanzu plugin cluster not found. installing...\n"
     install_tanzu_plugin
     printf "\n\n"
 fi
 
-ISINSTALLED=$(tanzu login --help)
-if [[ $ISINSTALLED == *"unknown"* ]]
+ISINSTALLED=$(find ~/.local/share/tanzu-cli/* -printf '%f\n' | grep "login$")
+if [[ -z $ISINSTALLED ]]
 then
     printf "\n\ntanzu plugin login not found. installing...\n"
     install_tanzu_plugin
     printf "\n\n"
 fi
 
-ISINSTALLED=$(tanzu kubernetes-release --help)
-if [[ $ISINSTALLED == *"unknown"* ]]
+ISINSTALLED=$(find ~/.local/share/tanzu-cli/* -printf '%f\n' | grep "kubernetes-release$")
+if [[ -z $ISINSTALLED ]]
 then
     printf "\n\ntanzu plugin kubernetes-release not found. installing...\n"
     install_tanzu_plugin
     printf "\n\n"
 fi
 
-ISINSTALLED=$(tanzu pinniped-auth --help)
-if [[ $ISINSTALLED == *"unknown"* ]]
+ISINSTALLED=$(find ~/.local/share/tanzu-cli/* -printf '%f\n' | grep "pinniped-auth$")
+if [[ $ISINSTALLED == *@("unknown"|"does not exist")* || -z $ISINSTALLED ]]
 then
     printf "\n\ntanzu plugin pinniped-auth not found. installing...\n"
     install_tanzu_plugin
     printf "\n\n"
 fi
-
-# ISINSTALLED=$(tanzu alpha --help)
-# if [[ $ISINSTALLED == *"unknown"* ]]
-# then
-#     printf "\n\ntanzu optional plugin alpha not found. installing...\n"
-#     tanzu plugin install alpha
-#     printf "\n\n"
-# fi
 
 tanzu plugin list
 
@@ -117,15 +132,29 @@ while true; do
     esac
 done
 
+rm /tmp/TANZU_CONNECT >> /dev/null
+
+cd ~
+source ~/binaries/tanzu_connect_management.sh
+
+
+
 export $(cat /root/.env | xargs)
 
 printf "\n\n\n Login into az using az-cli using service principal...\n"
 az login --service-principal --username $AZ_TKG_APP_ID --password $AZ_TKG_APP_CLIENT_SECRET --tenant $AZ_TENANT_ID
 
 
-printf "\nYour available wizards are:\n"
-echo -e "\t~/binaries/tkginstall.sh"
+
+rm /tmp/TANZU_CONNECT >> /dev/null
+
+cd ~
+source ~/binaries/tanzu_connect_management.sh
+
+printf "\n\n\nYour available wizards are:\n"
+echo -e "\t~/binaries/tkginstall.sh -h"
 echo -e "\t~/binaries/tkgworkloadwizard.sh --help"
+echo -e "\t~/binaries/tkgconnect.sh --help"
 
 cd ~
 
