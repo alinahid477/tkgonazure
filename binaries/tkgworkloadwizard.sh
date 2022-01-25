@@ -62,6 +62,7 @@ else
     AZURE_RESOURCE_GROUP=$(cat $configfile | sed -r 's/[[:alnum:]]+=/\n&/g' | awk -F: '$1=="AZURE_RESOURCE_GROUP"{print $2}' | xargs)
     CLUSTER_NAME=$(cat $configfile | sed -r 's/[[:alnum:]]+=/\n&/g' | awk -F: '$1=="CLUSTER_NAME"{print $2}' | xargs)
     TMC_CLUSTER_GROUP=$(cat $configfile | sed -r 's/[[:alnum:]]+=/\n&/g' | awk -F: '$1=="TMC_CLUSTER_GROUP"{print $2}' | xargs)
+    AZURE_LOCATION=$(cat $configfile | sed -r 's/[[:alnum:]]+=/\n&/g' | awk -F: '$1=="AZURE_LOCATION"{print $2}' | xargs)
     if [ -z "$TMC_CLUSTER_GROUP" ]
     then
         TMC_ATTACH_URL=$(cat $configfile | grep -o 'https://[^"]*' | xargs)
@@ -75,11 +76,11 @@ else
     printf "\nAZURE_RESOURCE_GROUP=$AZURE_RESOURCE_GROUP"
     printf "\nAZ_NSG_NAME=$AZ_NSG_NAME (derived from cluster name)"
     printf "\nCLUSTER_NAME=$CLUSTER_NAME"
-    if [[ ! -z $TMC_ATTACH_URL ]]
+    if [[ -n $TMC_ATTACH_URL ]]
     then
         printf "\nTMC_ATTACH_URL=$TMC_ATTACH_URL"
     fi
-    if [[ ! -z $TMC_CLUSTER_GROUP ]]
+    if [[ -n $TMC_CLUSTER_GROUP ]]
     then
         printf "\nTMC_CLUSTER_GROUP=$TMC_CLUSTER_GROUP"
     fi
@@ -108,14 +109,38 @@ then
     az vm image terms accept --publisher vmware-inc --offer tkg-capi --plan $TKG_PLAN --subscription $AZ_SUBSCRIPTION_ID
     printf "\n\nDONE.\n\n\n"
 
+    printf "Checking if resource group with name $AZURE_RESOURCE_GROUP exists...\n"
+    isexists=$(az group exists -n $AZURE_RESOURCE_GROUP | xargs)
+    if [[ $isexists == "false" ]]
+    then
+        printf "Resource group does not exist. Creating new...\n"
+        az group create -l $AZURE_LOCATION -n $AZURE_RESOURCE_GROUP --tags tkg $CLUSTER_NAME
+        printf "DONE\n\n"
+    else
+        printf "Resource group with name $AZURE_RESOURCE_GROUP already exists. Not creating new.\n"
+    fi
+
     printf "Creating NSG in azure\n\n"
     az network nsg create -g $AZURE_RESOURCE_GROUP -n $AZ_NSG_NAME --tags tkg $CLUSTER_NAME
     printf "\n\nDONE.\n\n\n"
 
-    
+
+    printf "Extracting latest TKR version....\n\n"
+    tanzucontext=$(tanzu config server list -o json | jq '.[].context' | xargs)
+    printf "Tanzu Context: $tanzucontext. Switching kubernetes context...\n"
+    kubectl config use-context $tanzucontext
+    printf "Performing kubectl get tkr ...\n"
+    latesttkrversion=$(kubectl get tkr --sort-by=.metadata.name -o jsonpath='{.items[-1:].metadata.name}' | awk 'NR==1{print $1}')
+    printf "Latest TKR: $latesttkrversion\n"
+
+    read -p "Type in tkr value OR press enter to accept the default value: $latesttkrversion " inp
+    if [[ -n $inp ]]
+    then
+        latesttkrversion=$inp
+    fi
 
     printf "Creating k8s cluster from yaml called ~/workload-clusters/$CLUSTER_NAME.yaml\n\n"
-    tanzu cluster create  --file $configfile -v 9 --tkr $TKR_VERSION # --dry-run > ~/workload-clusters/$CLUSTER_NAME-dryrun.yaml
+    tanzu cluster create  --file $configfile -v 9 --tkr $latesttkrversion # --dry-run > ~/workload-clusters/$CLUSTER_NAME-dryrun.yaml
     printf "\n\nDONE.\n\n\n"
 
     # printf "applying ~/workload-clusters/$CLUSTER_NAME-dryrun.yaml\n\n"

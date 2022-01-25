@@ -41,9 +41,12 @@ install_tanzu_plugin()
         cd /tmp/tanzu/cli/core
         versionfolder=$(ls | grep v)
         cd $versionfolder
-        install core/$versionfolder/tanzu-core-linux_amd64 /usr/local/bin/tanzu
+        install /tmp/tanzu/cli/core/$versionfolder/tanzu-core-linux_amd64 /usr/local/bin/tanzu
+        chmod +x /usr/local/bin/tanzu
         tanzu plugin install --local /tmp/tanzu/cli all
     fi
+
+    cd ~
 }
 
 
@@ -53,13 +56,13 @@ ls -l /root/binaries/*.sh | awk '{print $9}' | xargs chmod +x
 printf "\n\nChecking TMC ... \n\n"
 ISTMCEXISTS=$(tmc --help)
 sleep 1
-if [ -z "$ISTMCEXISTS" ]
+if [[ -z $ISTMCEXISTS ]]
 then
     printf "\n\ntmc command does not exist.\n\n"
     printf "\n\nChecking for binary presence...\n\n"
     IS_TMC_BINARY_EXISTS=$(ls ~/binaries/ | grep tmc)
     sleep 2
-    if [ -z "$IS_TMC_BINARY_EXISTS" ]
+    if [[ -z $IS_TMC_BINARY_EXISTS ]]
     then
         printf "\n\nBinary does not exist in ~/binaries directory.\n"
         printf "\nIf you could like to attach the newly created TKG clusters to TMC then please download tmc binary from https://{orgname}.tmc.cloud.vmware.com/clidownload and place in the ~/binaries directory.\n"
@@ -152,7 +155,7 @@ cd ~
 source ~/binaries/tanzu_connect_management.sh
 
 printf "\n\n\nYour available wizards are:\n"
-echo -e "\t~/binaries/tkginstall.sh -h"
+echo -e "\t~/binaries/tkginstall.sh --help"
 echo -e "\t~/binaries/tkgworkloadwizard.sh --help"
 echo -e "\t~/binaries/tkgconnect.sh --help"
 
