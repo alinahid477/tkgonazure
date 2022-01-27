@@ -105,22 +105,41 @@ then
 
     sed -i '$ d' $configfile
 
-    printf "Accept vm image azure sku $TKG_PLAN\n\n"
-    az vm image terms accept --publisher vmware-inc --offer tkg-capi --plan $TKG_PLAN --subscription $AZ_SUBSCRIPTION_ID
-    printf "\n\nDONE.\n\n\n"
-
     printf "Checking if resource group with name $AZURE_RESOURCE_GROUP exists...\n"
-    isexists=$(az group exists -n $AZURE_RESOURCE_GROUP | xargs)
-    if [[ $isexists == "false" ]]
+    isexistsAndLocation=$(az group show --name $AZURE_RESOURCE_GROUP | jq .location | xargs)
+    if [[ -z $isexistsAndLocation ]]
     then
         printf "Resource group does not exist. Creating new...\n"
         az group create -l $AZURE_LOCATION -n $AZURE_RESOURCE_GROUP --tags tkg $CLUSTER_NAME
         printf "DONE\n\n"
     else
-        printf "Resource group with name $AZURE_RESOURCE_GROUP already exists. Not creating new.\n"
+        if [[ "$isexistsAndLocation" == "$AZURE_LOCATION" ]]
+        then
+            printf "Resource group with name $AZURE_RESOURCE_GROUP already exists. No need to create new.\n"
+            while true; do
+                read -p "Confirm to continue using existing RG $AZURE_RESOURCE_GROUP? [y/n] " yn
+                case $yn in
+                    [Yy]* ) printf "\nyou confirmed yes\n"; break;;
+                    [Nn]* ) printf "\n\nYou said no. \n\nExiting...\n\n"; exit;;
+                    * ) echo "Please answer yes or no.";;
+                esac
+            done
+        else
+            printf "Resource group with name $AZURE_RESOURCE_GROUP already exists in location $isexistsAndLocation.\n"
+            printf "HOWEVER, selected azure location is: $AZURE_LOCATION.\n"
+            printf "ERROR: Resource group location and cluster resources location cannot be different. Cannot complete process. Existing...\n"
+            exit
+        fi
+        
     fi
 
-    printf "Creating NSG in azure\n\n"
+
+    printf "Accepting vm image azure sku $TKG_PLAN...\n\n"
+    az vm image terms accept --publisher vmware-inc --offer tkg-capi --plan $TKG_PLAN --subscription $AZ_SUBSCRIPTION_ID
+    printf "\n\nDONE.\n\n\n"
+
+
+    printf "Creating NSG in azure...\n\n"
     az network nsg create -g $AZURE_RESOURCE_GROUP -n $AZ_NSG_NAME --tags tkg $CLUSTER_NAME
     printf "\n\nDONE.\n\n\n"
 

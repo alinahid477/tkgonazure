@@ -21,6 +21,10 @@ unset AZURE_LOCATION
 unset AZURE_RESOURCE_GROUP
 unset AZURE_CONTROL_PLANE_MACHINE_TYPE
 unset AZURE_NODE_MACHINE_TYPE
+unset ENABLE_AUTOSCALER
+unset AUTOSCALER_MIN_SIZE_0
+unset AUTOSCALER_MAX_SIZE_0
+
 
 printf "\n\nLooking for management cluster config at: ~/.config/tanzu/tkg/clusterconfigs/\n"
 mgmtconfigfile=$(ls ~/.config/tanzu/tkg/clusterconfigs/ | awk -v i=1 -v j=1 'FNR == i {print $j}')
@@ -35,7 +39,7 @@ then
     do
         if [[ $key == *@("AZURE"|"CLUSTER_CIDR"|"SERVICE"|"TKG_HTTP_PROXY_ENABLED"|"ENABLE_AUDIT_LOGGING"|"ENABLE_CEIP_PARTICIPATION"|"ENABLE_MHC"|"IDENTITY_MANAGEMENT_TYPE")* ]]
         then
-            if [[ "$key" != @("AZURE_VNET_NAME"|"AZURE_CONTROL_PLANE_SUBNET_NAME"|"AZURE_CONTROL_PLANE_SUBNET_NAME"|"AZURE_RESOURCE_GROUP"|"AZURE_LOCATION"|"AZURE_CONTROL_PLANE_MACHINE_TYPE"|"AZURE_NODE_MACHINE_TYPE") ]]
+            if [[ "$key" != @("AZURE_VNET_RESOURCE_GROUP"|"AZURE_FRONTEND_PRIVATE_IP"|"AZURE_ENABLE_PRIVATE_CLUSTER"|"AZURE_VNET_NAME"|"AZURE_CONTROL_PLANE_SUBNET_NAME"|"AZURE_NODE_SUBNET_NAME"|"AZURE_RESOURCE_GROUP"|"AZURE_LOCATION"|"AZURE_CONTROL_PLANE_MACHINE_TYPE"|"AZURE_NODE_MACHINE_TYPE") ]]
             then
                 printf "$key: $(echo $val | sed 's,^ *,,; s, *$,,')\n" >> ~/workload-clusters/tmp.yaml
             fi
@@ -117,10 +121,11 @@ then
     if [ -z "$inp" ]
     then
         inp=$CLUSTER_NAME
-    else 
-        AZURE_RESOURCE_GROUP=$inp
+        
     fi
-    printf "AZURE_RESOURCE_GROUP: $inp\n" >> ~/workload-clusters/tmp.yaml
+    AZURE_RESOURCE_GROUP=$inp
+    printf "AZURE_RESOURCE_GROUP: $AZURE_RESOURCE_GROUP\n" >> ~/workload-clusters/tmp.yaml
+    printf "AZURE_VNET_RESOURCE_GROUP: $AZURE_RESOURCE_GROUP\n" >> ~/workload-clusters/tmp.yaml
     printf "\n\n"
 
 
@@ -132,13 +137,21 @@ then
     printf "AZURE_CONTROL_PLANE_MACHINE_TYPE: $inp\n" >> ~/workload-clusters/tmp.yaml
     printf "\n\n"
 
-    read -p "CONTROL_PLANE_MACHINE_COUNT:(press enter to keep extracted default \"$(if [ $CLUSTER_PLAN == "dev" ] ; then echo "1"; else echo "3"; fi)\") " inp
-    if [ -z "$inp" ]
-    then
-        if [ $CLUSTER_PLAN == "dev" ] ; then inp=1; else inp=3; fi
-    fi
-    printf "CONTROL_PLANE_MACHINE_COUNT: $inp\n" >> ~/workload-clusters/tmp.yaml
-    printf "\n\n"
+    while true; do
+        read -p "CONTROL_PLANE_MACHINE_COUNT:(press enter to keep extracted default \"$(if [ $CLUSTER_PLAN == "dev" ] ; then echo "1"; else echo "3"; fi)\") " inp
+        if [ -z "$inp" ]
+        then
+            if [ $CLUSTER_PLAN == "dev" ] ; then inp=1; else inp=3; fi
+        fi
+        if [[ ! $inp =~ ^[0-9]+$ || $inp < 1 ]]
+        then
+            printf "\nYou must provide a valid value.\n"
+        else
+            printf "CONTROL_PLANE_MACHINE_COUNT: $inp\n" >> ~/workload-clusters/tmp.yaml
+            printf "\n\n"
+            break
+        fi
+    done
 
     # intentionally left prompt AZURE_WORKER_MACHINE_TYPE (where as the config key name is AZURE_NODE_MACHINE_TYPE) to match key name  WORKER_MACHINE_COUNT
     read -p "AZURE_WORKER_MACHINE_TYPE:(press enter to keep extracted default \"$AZURE_NODE_MACHINE_TYPE\") " inp
@@ -149,13 +162,148 @@ then
     printf "AZURE_NODE_MACHINE_TYPE: $inp\n" >> ~/workload-clusters/tmp.yaml
     printf "\n\n"  
 
-    read -p "WORKER_MACHINE_COUNT:(press enter to keep extracted default \"$(if [ $CLUSTER_PLAN == "dev" ] ; then echo "1"; else echo "3"; fi)\") " inp
-    if [ -z "$inp" ]
+    while true; do
+        read -p "WORKER_MACHINE_COUNT:(press enter to keep extracted default \"$(if [ $CLUSTER_PLAN == "dev" ] ; then echo "1"; else echo "3"; fi)\") " inp
+        if [ -z "$inp" ]
+        then
+            if [ $CLUSTER_PLAN == "dev" ] ; then inp=1; else inp=3; fi
+        fi
+        if [[ ! $inp =~ ^[0-9]+$ || $inp < 1 ]]
+        then
+            printf "\nYou must provide a valid value.\n"
+        else
+            printf "WORKER_MACHINE_COUNT: $inp\n" >> ~/workload-clusters/tmp.yaml
+            printf "\n\n"
+            AUTOSCALER_MIN_SIZE_0=$inp
+            AUTOSCALER_MAX_SIZE_0=$inp
+            break
+        fi
+    done
+
+
+    while [[ -z $ENABLE_AUTOSCALER ]]; do
+        read -p "ENABLE_AUTOSCALER: [y/n] " yn
+        case $yn in
+            [Yy]* ) ENABLE_AUTOSCALER='true'; printf "\nyou confirmed yes\n"; break;;
+            [Nn]* ) ENABLE_AUTOSCALER='false'; printf "\nYou confirmed no.\n"; break;;
+            * ) echo "Please answer y or n.";;
+        esac        
+        printf "\n"    
+    done    
+    if [[ -z $ENABLE_AUTOSCALER ]]
     then
-        if [ $CLUSTER_PLAN == "dev" ] ; then inp=1; else inp=3; fi
+        ENABLE_AUTOSCALER='false'
     fi
-    printf "WORKER_MACHINE_COUNT: $inp\n" >> ~/workload-clusters/tmp.yaml
+    printf "ENABLE_AUTOSCALER: $ENABLE_AUTOSCALER\n" >> ~/workload-clusters/tmp.yaml
     printf "\n\n"
+
+    if [[ $ENABLE_AUTOSCALER == 'true' ]]
+    then
+        printf "***** Autoscaling configs ********\n\n"    
+        while true; do
+            read -p "AUTOSCALER_MIN_SIZE_0 (number only. Press enter to accept default=$AUTOSCALER_MIN_SIZE_0):  " inp
+            if [[ -z $inp ]]
+            then
+                inp=$AUTOSCALER_MIN_SIZE_0
+            fi
+
+            if [[ ! $inp =~ ^[0-9]+$ || $inp < 1 ]]
+            then
+                printf "\nYou must provide a valid integer value.\n"
+            else
+                AUTOSCALER_MIN_SIZE_0=$inp
+                printf "AUTOSCALER_MIN_SIZE_0: $AUTOSCALER_MAX_SIZE_0\n" >> ~/workload-clusters/tmp.yaml
+                printf "\n\n"
+                break
+            fi
+            printf "\n"
+        done
+
+        
+        while true; do
+            read -p "AUTOSCALER_MAX_SIZE_0 (number only. Press enter to accept default=$AUTOSCALER_MAX_SIZE_0):  " inp
+            if [[ -z $inp ]]
+            then
+                inp=$AUTOSCALER_MAX_SIZE_0
+            fi
+
+            if [[ ! $inp =~ ^[0-9]+$ || $inp < 1 ]]
+            then
+                printf "\nYou must provide a valid integer value.\n"
+            else
+                AUTOSCALER_MAX_SIZE_0=$inp
+                printf "AUTOSCALER_MAX_SIZE_0: $AUTOSCALER_MAX_SIZE_0\n" >> ~/workload-clusters/tmp.yaml
+                printf "\n\n"
+                break
+            fi
+            printf "\n"
+        done
+
+        unset AUTOSCALER_SCALE_DOWN_DELAY_AFTER_ADD
+        while true; do
+            read -p "AUTOSCALER_SCALE_DOWN_DELAY_AFTER_ADD (number only in mins. Press enter to accept default=10):  " inp
+            if [[ -z $inp ]]
+            then
+                inp=10
+            fi
+
+            if [[ ! $inp =~ ^[0-9]+$ || $inp < 1 ]]
+            then
+                printf "\nYou must provide a valid integer value.\n"
+            else
+                AUTOSCALER_SCALE_DOWN_DELAY_AFTER_ADD=$(echo "$inp"m)
+                printf "AUTOSCALER_SCALE_DOWN_DELAY_AFTER_ADD: \"$AUTOSCALER_SCALE_DOWN_DELAY_AFTER_ADD\"\n" >> ~/workload-clusters/tmp.yaml
+                printf "\n\n"
+                break
+            fi
+            printf "\n"
+        done
+
+        unset AUTOSCALER_SCALE_DOWN_DELAY_AFTER_DELETE
+        while true; do
+            read -p "AUTOSCALER_SCALE_DOWN_DELAY_AFTER_DELETE (number only in secs. Press enter to accept default=10):  " inp
+            if [[ -z $inp ]]
+            then
+                inp=10
+            fi
+
+            if [[ ! $inp =~ ^[0-9]+$ || $inp < 1 ]]
+            then
+                printf "\nYou must provide a valid integer value.\n"
+            else
+                AUTOSCALER_SCALE_DOWN_DELAY_AFTER_DELETE=$(echo "$inp"s)
+                printf "AUTOSCALER_SCALE_DOWN_DELAY_AFTER_DELETE: \"$AUTOSCALER_SCALE_DOWN_DELAY_AFTER_DELETE\"\n" >> ~/workload-clusters/tmp.yaml
+                printf "\n\n"
+                break
+            fi
+            printf "\n"
+        done
+
+        unset AUTOSCALER_SCALE_DOWN_DELAY_AFTER_FAILURE
+        while true; do
+            read -p "AUTOSCALER_SCALE_DOWN_DELAY_AFTER_FAILURE (number only in min. Press enter to accept default=3):  " inp
+            if [[ -z $inp ]]
+            then
+                inp=3
+            fi
+
+            if [[ ! $inp =~ ^[0-9]+$ || $inp < 1 ]]
+            then
+                printf "\nYou must provide a valid integer value.\n"
+            else
+                AUTOSCALER_SCALE_DOWN_DELAY_AFTER_FAILURE=$(echo "$inp"m)
+                printf "AUTOSCALER_SCALE_DOWN_DELAY_AFTER_FAILURE: \"$AUTOSCALER_SCALE_DOWN_DELAY_AFTER_FAILURE\"\n" >> ~/workload-clusters/tmp.yaml
+                printf "\n\n"
+                break
+            fi
+            printf "\n"
+        done
+
+        printf "AUTOSCALER_SCALE_DOWN_UNNEEDED_TIME: \"10m\"\n" >> ~/workload-clusters/tmp.yaml
+        printf "AUTOSCALER_MAX_NODE_PROVISION_TIME: \"15m\"\n" >> ~/workload-clusters/tmp.yaml
+
+        printf "***** END Autoscaling configs ********\n\n"
+    fi
 
 
 
@@ -183,6 +331,8 @@ then
     
     printf "ENABLE_DEFAULT_STORAGE_CLASS: true\n" >> ~/workload-clusters/tmp.yaml
     
+    printf "ENABLE_MHC_CONTROL_PLANE: true\n" >> ~/workload-clusters/tmp.yaml
+    printf "ENABLE_MHC_WORKER_NODE: true\n" >> ~/workload-clusters/tmp.yaml
     printf "MHC_UNKNOWN_STATUS_TIMEOUT: 5m\n" >> ~/workload-clusters/tmp.yaml
     printf "MHC_FALSE_STATUS_TIMEOUT: 12m\n" >> ~/workload-clusters/tmp.yaml
 
@@ -192,7 +342,7 @@ then
         read -p "Review generated file ~/workload-clusters/$CLUSTER_NAME.yaml and confirm or modify in the file and confirm to proceed further? [y/n] " yn
         case $yn in
             [Yy]* ) export configfile=$(echo "~/workload-clusters/$CLUSTER_NAME.yaml"); printf "\nyou confirmed yes\n"; break;;
-            [Nn]* ) printf "\n\nYou said no. \n\nExiting...\n\n"; break;;
+            [Nn]* ) printf "\n\nYou said no. \n\nExiting...\n\n"; exit;;
             * ) echo "Please answer yes or no.";;
         esac
     done
