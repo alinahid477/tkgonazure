@@ -62,12 +62,6 @@ Below are the values required:
     - Notice the `1dot20dot4` part instead of `1.20.4`. Follow the same. 
     - IMPORTANT: In Tanzu Kubernetes Grid v1.3.1, the default cluster image --plan value is k8s-1dot20dot4-ubuntu-2004, based on Kubernetes version 1.20.4 and the machine OS, Ubuntu 20.04. 
     - Run `tanzu kubernetes-release get` to check the latest.
-- TKR_VERSION={default `v1.20.4---vmware.3-tkg.1`}
-    - The default value is the latest at the time of writing this. 
-    - This value is used for workload cluster creation using tkgworkloadwizard.sh. 
-    - After you provision the management cluster you can get updated value by running `tanzu kubernetes-release get` and picking a version that is compatible=true and upgradable=true. 
-    - Also adjust the `TKG_PLAN` according to the TKR you pick. 
-    - ***Without right TKR and TKG_PLAN combo you will run into this error `ResourcePurchaseValidationFailed" Message="User failed validation to purchase resources. Error message: 'You have not accepted the legal terms on this subscription: 'xxxxx-xxx-xxx-000-203384034nho' for this plan. Before the subscription can be used, you need to accept the legal terms of the image.`***
 - TKG_ADMIN_EMAIL={this email address will be needed for private and public key purpose. Nothing will be emailed to this address. Just for signature purpose stuff.}
 - TMC_API_TOKEN={tmc api token for TMC authentication. Follow below steps to generate a TMC API Token:}
     - Navigate to https://console.cloud.vmware.com/csp/gateway/portal/#/user/profile (OR on tmc console click username at the top right corner > click My Accout)
@@ -132,7 +126,7 @@ What the wizard will do:
 - Once you have confirmed the configfile on the wizard prompt, it will then proceed to install the workload cluster based on the configfile. This process takes some time (approx 5-15mins depending on the size of the k8s cluster) so grab a coffee or beer or go for a short walk.
 
 
-## TKR_VERSION and CLUSTER_PLAN (bonus) 
+## TKR_VERSION and TKG_PLAN (bonus) 
 
 Once you get shell access to the docker container, follow the below steps to get latest TKR_VERSION and CLUSTER_PLAN
 
@@ -158,6 +152,14 @@ Steps:
 - if "reconcile failed" then do `kubectl get app pinniped -n tkg-system -o yaml`
 
 
+
+# Gotchas
+
+**TKR={default latest}**
+- This value is used for workload cluster creation using tkgworkloadwizard.sh. 
+- After you provision the management cluster you can get updated value by running `tanzu kubernetes-release get` and picking a version that is compatible=true and upgradable=true. 
+- Also adjust the `TKG_PLAN` according to the TKR you pick. 
+- ***Without right TKR and TKG_PLAN combo you will run into this error `ResourcePurchaseValidationFailed" Message="User failed validation to purchase resources. Error message: 'You have not accepted the legal terms on this subscription: 'xxxxx-xxx-xxx-000-203384034nho' for this plan. Before the subscription can be used, you need to accept the legal terms of the image.`***
 
 
 
