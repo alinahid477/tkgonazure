@@ -11,12 +11,12 @@ The official documentation of Tanzu Kubernetes Grid (https://docs.vmware.com/en/
 This docker container is a bootstrapped way for achieving the same but a lot simpler. eg: You don't need to install anything on your host machine. Infact, you dont need to install anything. This bootstrapped docker takes care of all the installation prerequisits. It also helps with organising the files location (*eg: Per management cluster and all of its workload cluster you can have one instance of this docker.*)
 
 The bootstrap environment comes with the below pre-installed and some handy wizards to create management and workload clusters and attach clusters to tmc
-- az cli
-- kubectl
-- tmc cli (optional)
-- tkginstall --> lets you create TKG on azure with UI.
-- tkgworkloadwizard --> lets you create TKG Workload cluster with simple prompts.
-- attact_to_tmc --> lets you attach cluster to Tanzu Mission Control
+- **az cli**
+- **kubectl**
+- **tmc cli (optional)**
+- **tkginstall --> lets you create TKG on azure with UI.**
+- **tkgworkloadwizard --> lets you create TKG Workload cluster with simple prompts.**
+- **attact_to_tmc --> lets you attach cluster to Tanzu Mission Control**
 
 ## Pre-Requisites
 
@@ -72,11 +72,13 @@ Below are the values required:
 ## Run / Start
 
 ```
-docker build . -t tkgonazure
-docker run -it --rm --net=host -v ${PWD}:/root/ -v /var/run/docker.sock:/var/run/docker.sock --name tkgonazure tkgonazure /bin/bash
+./start.sh (for linux) or start.bat (for windows)
 ```
 
-*Yes, I am using --net=host ---> since this is only a bootstrapped container scalability is not of concern and since I will only run this to provision tkgm on azure and only on my localmachine or a jump vm security is not of concern*
+The above takes 2 optional parameters
+- *forcebuild* --> passs this to force rebuild the docker container. Otherwise the docker container is built once and get re-used.
+- *{name of the container}* --> default is: **merlin-tkgonazure**.
+
 
 # Creating Tanzu Management Cluster on Azure
 
@@ -114,23 +116,21 @@ There are 2 ways to use the wizard:
 
 
 What the wizard will do:
-- The wizard will prompt for the below configurations:
+- The wizard will prompt for the below inputs:
     - CLUSTER_NAME (The wizard will auto populate from the -n paramater)
     - CLUSTER_PLAN (The wizard will prompt based on the value of management-cluster. This is optional. The wizard will have default value based on the management cluster provisioned. But feel free to change. For `CLUSTER_PLAN: prod` it is 3 control plane nodes and 3 worker nodes. For `CLUSTER_PLAN: dev` it is 1 control plane node and 1 worker node.)
     - AZURE_CONTROL_PLANE_MACHINE_TYPE: (The will have default value matched to management-cluster. But you can overwrite it by typing a new value (eg: Standard_B2s). ***Minimum vCPU requirement is: 2***. Check the machine types here: https://docs.microsoft.com/en-us/azure/virtual-machines/sizes)
     - AZURE_NODE_MACHINE_TYPE (Same instruction as above. This is for worker nodes.)
     - CONTROL_PLANE_MACHINE_COUNT (The wizard will set default value matching to the management cluster. You can overwrite it here)
     - WORKER_MACHINE_COUNT (Same instruction as above)
+    - AUTOSCALE_ENABLED (y/n). When selected y then it asks for below:
+        - Few autoscaling related input such as max node, min node, timeout, etc
     - TMC_ATTACH_URL (This is optional. If you want to attach this cluster to TMC input the url here. *Note: Do not input the entire string here. Input only the URL*)
 - The wizard will generate the config file and ask you to review. You can also modify the file.
 - Once you have confirmed the configfile on the wizard prompt, it will then proceed to install the workload cluster based on the configfile. This process takes some time (approx 5-15mins depending on the size of the k8s cluster) so grab a coffee or beer or go for a short walk.
 
 
-## TKR_VERSION and TKG_PLAN (bonus) 
-
-Once you get shell access to the docker container, follow the below steps to get latest TKR_VERSION and CLUSTER_PLAN
-
-- run `tanzu kubernetes-release get` to get the Tanzu Kubernetes Release Version (eg: v1.20.4---vmware.3-tkg.1) and record a compatible=true and upgradable=true version. Fill the value in .env file for `TKR_VERSION` field. Also adjust the `TKG_PLAN` according to the TKR you pick. 
+ 
 
 
 # Enable Identity Management After Management Cluster Deployment (optional)
@@ -155,13 +155,17 @@ Steps:
 
 # Gotchas
 
-**TKR={default latest}**
+#### TKR={default latest}
 - This value is used for workload cluster creation using tkgworkloadwizard.sh. 
 - After you provision the management cluster you can get updated value by running `tanzu kubernetes-release get` and picking a version that is compatible=true and upgradable=true. 
 - Also adjust the `TKG_PLAN` according to the TKR you pick. 
 - ***Without right TKR and TKG_PLAN combo you will run into this error `ResourcePurchaseValidationFailed" Message="User failed validation to purchase resources. Error message: 'You have not accepted the legal terms on this subscription: 'xxxxx-xxx-xxx-000-203384034nho' for this plan. Before the subscription can be used, you need to accept the legal terms of the image.`***
 
 
+
+#### TKR_VERSION and TKG_PLAN (bonus) 
+Once you get shell access to the docker container, follow the below steps to get latest TKR_VERSION and CLUSTER_PLAN
+- run `tanzu kubernetes-release get` to get the Tanzu Kubernetes Release Version (eg: v1.20.4---vmware.3-tkg.1) and record a compatible=true and upgradable=true version. Fill the value in .env file for `TKR_VERSION` field. Also adjust the `TKG_PLAN` according to the TKR you pick.
 
 
 # Handy Commands
