@@ -28,9 +28,11 @@ unset AUTOSCALER_MAX_SIZE_0
 
 printf "\n\nLooking for management cluster config at: ~/.config/tanzu/tkg/clusterconfigs/\n"
 mgmtconfigfile=$(ls ~/.config/tanzu/tkg/clusterconfigs/ | awk -v i=1 -v j=1 'FNR == i {print $j}')
-printf "\n\nFound management cluster config file: $mgmtconfigfile\n"
-if [[ ! -z $mgmtconfigfile ]]
+
+if [[ -n $mgmtconfigfile ]]
 then
+    printf "\n\nFound management cluster config file: $mgmtconfigfile\n"
+
     mgmtconfigfile=~/.config/tanzu/tkg/clusterconfigs/$mgmtconfigfile 
     printf "Extracting values from file: $mgmtconfigfile\n"
     echo "" > ~/workload-clusters/tmp.yaml
