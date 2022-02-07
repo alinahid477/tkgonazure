@@ -144,6 +144,12 @@ source ~/binaries/tanzu_connect_management.sh
 
 export $(cat /root/.env | xargs)
 
+
+if [[ -z $AZ_TKG_APP_ID || -z $AZ_TKG_APP_CLIENT_SECRET ]]
+then
+    az login
+fi
+
 printf "\n\n\n Login into az using az-cli using service principal...\n"
 az login --service-principal --username $AZ_TKG_APP_ID --password $AZ_TKG_APP_CLIENT_SECRET --tenant $AZ_TENANT_ID
 

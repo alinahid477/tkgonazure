@@ -5,7 +5,6 @@
 .tanzu
 .local
 .azure
-.ssh
 .vmware-cna-saas
 
 .config

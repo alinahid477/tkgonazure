@@ -82,10 +82,10 @@ then
     if [[ -n $MANAGEMENT_CLUSTER_CONFIG_FILE ]]
     then
         printf "\nLaunching management cluster create using $MANAGEMENT_CLUSTER_CONFIG_FILE...\n"
-        tanzu management-cluster create --file $MANAGEMENT_CLUSTER_CONFIG_FILE -v 9
+        tanzu management-cluster create --file $MANAGEMENT_CLUSTER_CONFIG_FILE -v 9 --timeout 2h
     else
         printf "\nLaunching management cluster create using UI...\n"
-        tanzu management-cluster create --ui -y -v 9 --browser none
+        tanzu management-cluster create --ui -y -v 9 --browser none --timeout 2h
     fi
 
     ISPINNIPED=$(kubectl get svc -n pinniped-supervisor | grep pinniped-supervisor)
