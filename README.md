@@ -1,3 +1,7 @@
+# (DEPRICATED)
+
+Visit https://github.com/alinahid477/merlin for merlin for tkg
+
 # Tanzu Kubernetes Grid Wizard for TKGm on Azure
 
 ***This repo is a part of Merlin initiative (https://github.com/alinahid477/merlin)***
@@ -51,10 +55,10 @@ Without the TMC binary the only option is to use the `TMC_ATTACH_URL` if you wan
 
 Below are the values required:
 - AZ_TENANT_ID={search 'tenant properties' in portal to get the azure tenant id}
-- AZ_TKG_APP_ID={APP_ID is also known as CLIENT_ID. To generate app id follow the below steps:}
+- AZ_APP_ID={APP_ID is also known as CLIENT_ID. To generate app id follow the below steps:}
     - In Azure portal console search 'app registration' > New Regitration. 
     - The process is documented here: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-mgmt-clusters-azure.html#register-tanzu-kubernetes-grid-as-an-azure-client-app-3
-- AZ_TKG_APP_CLIENT_SECRET={recorded secret from the above}
+- AZ_APP_CLIENT_SECRET={recorded secret from the above}
 - AZ_SUBSCRIPTION_ID={azure subscription id}
 - TKG_PLAN={default: `k8s-1dot20dot4-ubuntu-2004`}
     - The default value is the latest at the time of writing this. 
